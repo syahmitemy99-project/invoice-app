@@ -50,6 +50,25 @@
             #invoice-output { display: block !important; width: 100%; margin: 0; padding: 15mm; box-shadow: none; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
             @page { size: A4; margin: 0; }
         }
+        
+        /* Untuk Template Classic (Kotak Hitam) */
+.tpl-classic .inv-table tbody {
+    /* Kita paksa tinggi badan jadual sekurang-kurangnya 400px atau lebih */
+    min-height: 500px; 
+}
+
+/* Teknik untuk paksa garisan kotak jadual nampak penuh ke bawah */
+.tpl-classic .inv-table tr:last-child td {
+    height: 400px; /* Ini akan 'stretch' baris terakhir supaya penuh ke bawah */
+    vertical-align: top;
+}
+
+/* Untuk Template Modern */
+.tpl-modern .inv-table tbody tr:last-child td {
+    height: 400px;
+    vertical-align: top;
+}
+
     </style>
 </head>
 <body>
