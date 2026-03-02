@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Modern Invoice Builder - Syahmi</title>
+    <style>
+        :root { --primary: #000; --accent: #007bff; --bg: #f8f9fa; --text: #333; }
+        body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+        
+        /* Input Form Style */
+        .form-container { background: white; max-width: 850px; margin: 0 auto 50px auto; padding: 40px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #eee; }
+        h2 { font-size: 24px; margin-bottom: 25px; font-weight: 700; color: var(--primary); }
+        label { font-size: 13px; font-weight: 600; text-transform: uppercase; color: #666; margin-bottom: 5px; display: block; }
+        input, textarea { width: 100%; padding: 12px; margin-bottom: 20px; border: 1.5px solid #e1e1e1; border-radius: 8px; font-size: 15px; box-sizing: border-box; }
+        
+        .item-row { display: flex; gap: 15px; margin-bottom: 10px; background: #fafafa; padding: 15px; border-radius: 8px; align-items: flex-end; }
+        .btn-add { background: #fff; color: var(--accent); border: 2px solid var(--accent); padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        .btn-generate { background: var(--primary); color: white; padding: 18px; width: 100%; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 30px; }
+
+        /* --- OUTPUT STYLING (FIXED FOR A4) --- */
+        #invoice-output { 
+            display: none; 
+            background: white; 
+            width: 210mm; /* Lebar tepat A4 */
+            min-height: 297mm; /* Tinggi tepat A4 */
+            margin: 20px auto; 
+            padding: 20mm; /* Margin dalaman standard dokumen */
+            box-sizing: border-box; 
+            position: relative;
+            color: #000;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        .inv-header { display: flex; justify-content: space-between; margin-bottom: 40px; }
+        .inv-table { width: 100%; border-collapse: collapse; margin-top: 30px; }
+        .inv-table th { border-top: 2px solid #000; border-bottom: 2px solid #000; padding: 12px; text-align: left; }
+        .inv-table td { border-bottom: 1px solid #eee; padding: 12px; }
+        .inv-total { text-align: right; margin-top: 40px; font-size: 20px; font-weight: bold; }
+        .total-line { border-bottom: 4px double #000; display: inline-block; padding: 5px 15px; }
+        
+        #out_logo_box img, .sign-box img { 
+            max-width: 150px; 
+            max-height: 80px; 
+            object-fit: contain; 
+            display: block;
+        }
+
+        /* --- PRINT SETTINGS --- */
+        @media print {
+            body { background: none; padding: 0; margin: 0; }
+            .no-print { display: none !important; }
+            
+            #invoice-output { 
+                display: block !important; 
+                width: 100%; 
+                margin: 0; 
+                padding: 15mm; 
+                box-shadow: none;
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+            }
+
+            @page {
+                size: A4;
+                margin: 0; /* Margin dikawal oleh padding #invoice-output */
+            }
+
+            /* Elak gambar/row terpotong antara page */
+            .item-row, tr, img { page-break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="form-section" class="form-container no-print">
+    <h2>Syahmi Invoice Builder</h2>
+    
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+        <div><label>Syarikat Anda</label><input type="text" id="f_name" placeholder="Syahmi Repair Services"></div>
+        <div><label>Logo Syarikat</label><input type="file" id="logo_input" accept="image/*"></div>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+        <div><label>No. Invoice</label><input type="number" id="inv_no" value="100"></div>
+        <div><label>Tarikh Invois</label><input type="date" id="inv_date"></div>
+    </div>
+    
+    <label>Alamat Syarikat</label><textarea id="f_addr" rows="2"></textarea>
+    <label>Bill To (Pelanggan)</label><textarea id="billto" rows="3"></textarea>
+    
+    <div><label>Tandatangan (PNG)</label><input type="file" id="sign_input" accept="image/*"></div>
+
+    <h3>Senarai Barang</h3>
+    <div id="items-list">
+        <div class="item-row">
+            <div style="flex:3;"><label>Description</label><input type="text" class="desc" placeholder="Service fee"></div>
+            <div style="flex:1;"><label>Qty</label><input type="number" class="qty" value="1"></div>
+            <div style="flex:1;"><label>Harga (RM)</label><input type="number" class="price" step="0.01"></div>
+        </div>
+    </div>
+    
+    <button type="button" class="btn-add" onclick="addItem()">+ Tambah Baris</button>
+    <button type="button" class="btn-generate" onclick="generateInvoice()">HASILKAN INVOICE</button>
+</div>
+
+<div id="invoice-output">
+    <div class="inv-header">
+        <div>
+            <div id="out_f_name" style="font-size:24px; font-weight:900;"></div>
+            <p id="out_f_addr" style="font-size:13px; width:300px; margin-top:5px; white-space: pre-line;"></p>
+        </div>
+        <div style="text-align: right;">
+            <div style="font-size:28px; font-weight:900; margin-bottom:10px;">INVOICE</div>
+            <div id="out_logo_box"></div>
+        </div>
+    </div>
+    
+    <div style="display:flex; justify-content:space-between; margin-bottom:40px; font-size:14px;">
+        <div><label>Bill To</label><div id="out_billto" style="white-space: pre-line;"></div></div>
+        <div style="text-align:right;">
+            <p><b>Invoice #</b> <span id="out_inv_no"></span></p>
+            <p><b>Date:</b> <span id="out_inv_date"></span></p>
+        </div>
+    </div>
+
+    <table class="inv-table" id="out_table">
+        <thead><tr><th>Description</th><th style="text-align:right;">Amount (RM)</th></tr></thead>
+        <tbody></tbody>
+    </table>
+
+    <div class="inv-total">TOTAL<br><div class="total-line" id="out_total">RM 0.00</div></div>
+    
+    <div style="margin-top: 60px;">
+        <p style="font-size:12px; margin-bottom:10px;">Tandatangan Pengesahan:</p>
+        <div class="sign-box" id="out_sign_box"></div>
+    </div>
+
+    <div class="no-print" style="margin-top:50px; text-align:center;">
+        <button onclick="window.print()" style="padding:15px 30px; background:#007bff; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">DOWNLOAD PDF</button>
+        <button onclick="location.reload()" style="margin-left:15px; cursor:pointer;">Edit Semula</button>
+    </div>
+</div>
+
+<script>
+    document.getElementById('inv_date').valueAsDate = new Date();
+
+// Function untuk tambah baris baru
+function addItem() {
+    const html = `
+        <div class="item-row">
+            <div style="flex:3;">
+                <label class="no-print">Description</label>
+                <input type="text" class="desc" placeholder="Contoh: Repair Laptop">
+            </div>
+            <div style="flex:1;">
+                <label class="no-print">Qty</label>
+                <input type="number" class="qty" value="1">
+            </div>
+            <div style="flex:1;">
+                <label class="no-print">Harga (RM)</label>
+                <input type="number" class="price" step="0.01">
+            </div>
+            <button type="button" onclick="removeItem(this)" 
+                style="background:#ff4d4d; color:white; border:none; padding:10px; 
+                border-radius:8px; cursor:pointer; margin-bottom:20px; font-weight:bold;">
+                ✕
+            </button>
+        </div>`;
+    
+    document.getElementById('items-list').insertAdjacentHTML('beforeend', html);
+}
+
+// Function baru untuk delete baris
+function removeItem(btn) {
+    // btn.parentElement adalah div "item-row" tersebut
+    btn.parentElement.remove();
+}
+
+    function generateInvoice() {
+        // Text Data
+        document.getElementById('out_f_name').innerText = document.getElementById('f_name').value;
+        document.getElementById('out_f_addr').innerText = document.getElementById('f_addr').value;
+        document.getElementById('out_billto').innerText = document.getElementById('billto').value;
+        document.getElementById('out_inv_no').innerText = document.getElementById('inv_no').value;
+        document.getElementById('out_inv_date').innerText = document.getElementById('inv_date').value;
+
+        // Table Data
+        const descs = document.getElementsByClassName('desc');
+        const qtys = document.getElementsByClassName('qty');
+        const prices = document.getElementsByClassName('price');
+        let grandTotal = 0;
+        let tableBody = "";
+
+        for(let i=0; i<descs.length; i++) {
+            let sub = (qtys[i].value || 0) * (prices[i].value || 0);
+            grandTotal += sub;
+            tableBody += `<tr><td><b>${descs[i].value}</b><br><small>Qty: ${qtys[i].value}</small></td><td style="text-align:right;">${sub.toFixed(2)}</td></tr>`;
+        }
+        
+        document.querySelector("#out_table tbody").innerHTML = tableBody;
+        document.getElementById('out_total').innerText = "RM " + grandTotal.toFixed(2);
+
+        // Handle Images
+        const handleImage = (inputId, outputId) => {
+            const file = document.getElementById(inputId).files[0];
+            if(file) {
+                const reader = new FileReader();
+                reader.onload = (e) => { document.getElementById(outputId).innerHTML = `<img src="${e.target.result}">`; };
+                reader.readAsDataURL(file);
+            }
+        };
+
+        handleImage('logo_input', 'out_logo_box');
+        handleImage('sign_input', 'out_sign_box');
+
+        // Switch View
+        document.getElementById('form-section').style.display = 'none';
+        document.getElementById('invoice-output').style.display = 'block';
+    }
+</script>
+</body>
+</html>
