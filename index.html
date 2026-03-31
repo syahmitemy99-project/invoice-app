@@ -1,48 +1,235 @@
 <!DOCTYPE html>
-<html>
+<html lang="ms">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Modern Invoice Builder - Syahmi</title>
     <style>
-        :root { --primary: #000; --accent: #007bff; --bg: #f8f9fa; --text: #333; }
-        body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
-        
-        /* Input Form Style */
-        .form-container { background: white; max-width: 850px; margin: 0 auto 50px auto; padding: 40px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #eee; }
-        h2 { font-size: 24px; margin-bottom: 25px; font-weight: 700; color: var(--primary); }
-        label { font-size: 13px; font-weight: 600; text-transform: uppercase; color: #666; margin-bottom: 5px; display: block; }
-        input, textarea, select { width: 100%; padding: 12px; margin-bottom: 20px; border: 1.5px solid #e1e1e1; border-radius: 8px; font-size: 15px; box-sizing: border-box; }
-        
-        .item-row { display: flex; gap: 15px; margin-bottom: 10px; background: #fafafa; padding: 15px; border-radius: 8px; align-items: flex-end; }
-        .btn-add { background: #fff; color: var(--accent); border: 2px solid var(--accent); padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; }
-        .btn-generate { background: var(--primary); color: white; padding: 18px; width: 100%; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 30px; }
-
-        /* --- OUTPUT STYLING (A4) --- */
-        #invoice-output { 
-            display: none; 
-            background: white; 
-            width: 210mm; 
-            min-height: 297mm; 
-            margin: 20px auto; 
-            padding: 20mm; 
-            box-sizing: border-box; 
-            position: relative;
-            color: #000;
+        :root {
+            --primary: #1d140f;
+            --accent: #c96f3b;
+            --accent-dark: #a85627;
+            --bg: #f4ede6;
+            --surface: rgba(255,255,255,0.88);
+            --surface-strong: #fffdf9;
+            --line: rgba(71, 44, 29, 0.12);
+            --text: #2f241d;
+            --muted: #77665b;
+            --shadow: 0 24px 60px rgba(69, 38, 18, 0.14);
+        }
+        body {
+            font-family: 'Segoe UI Variable Display', 'Trebuchet MS', sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(201, 111, 59, 0.22), transparent 32%),
+                radial-gradient(circle at bottom right, rgba(83, 143, 117, 0.16), transparent 28%),
+                linear-gradient(180deg, #f8f2ec 0%, #efe4d8 100%);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
         }
 
-        /* STYLE 1: CLASSIC BLACK (KOTAK) */
-        .tpl-classic .inv-table { width: 100%; border-collapse: collapse; border: 2px solid #000; margin-top: 20px;}
+        .form-container {
+            background: var(--surface);
+            backdrop-filter: blur(12px);
+            max-width: 850px;
+            margin: 0 auto 50px auto;
+            padding: 40px;
+            border-radius: 28px;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(255,255,255,0.7);
+        }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        h2 { font-size: 32px; margin-bottom: 10px; font-weight: 800; color: var(--primary); letter-spacing: -0.03em; }
+        h3 { margin-top: 34px; margin-bottom: 14px; font-size: 18px; color: var(--primary); }
+        .form-subtitle { margin: 0 0 28px; color: var(--muted); font-size: 15px; line-height: 1.6; max-width: 580px; }
+        label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 7px; display: block; }
+        input, textarea, select {
+            width: 100%;
+            padding: 14px 16px;
+            margin-bottom: 20px;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            font-size: 15px;
+            box-sizing: border-box;
+            background: rgba(255,255,255,0.92);
+            color: var(--text);
+            transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+        }
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: rgba(201, 111, 59, 0.65);
+            box-shadow: 0 0 0 4px rgba(201, 111, 59, 0.14);
+            transform: translateY(-1px);
+        }
+
+        .item-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 12px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(246,239,232,0.95));
+            padding: 16px;
+            border-radius: 18px;
+            align-items: flex-end;
+            border: 1px solid rgba(71, 44, 29, 0.08);
+        }
+        .item-row > div { min-width: 0; }
+        .upload-field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .upload-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .upload-row input[type="file"] {
+            margin-bottom: 0;
+            flex: 1;
+            min-width: 0;
+        }
+        .clear-upload-btn {
+            border: 1px solid rgba(201, 111, 59, 0.2);
+            background: transparent;
+            color: var(--accent-dark);
+            padding: 7px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .btn-add {
+            background: transparent;
+            color: var(--accent-dark);
+            border: 1px solid rgba(201, 111, 59, 0.28);
+            padding: 12px 20px;
+            border-radius: 999px;
+            cursor: pointer;
+            font-weight: 700;
+        }
+        .btn-generate {
+            background: linear-gradient(135deg, var(--primary), #4b2c1c);
+            color: white;
+            padding: 18px;
+            width: 100%;
+            border: none;
+            border-radius: 18px;
+            font-size: 16px;
+            font-weight: 800;
+            cursor: pointer;
+            margin-top: 30px;
+            letter-spacing: 0.03em;
+            box-shadow: 0 18px 30px rgba(29, 20, 15, 0.22);
+        }
+        .invoice-meta { display:flex; justify-content:space-between; margin-bottom:40px; font-size:14px; gap:20px; }
+        .invoice-company { min-width: 0; }
+        .invoice-brand { text-align:right; }
+        .invoice-brand, .invoice-billto, .invoice-meta-right { min-width: 0; }
+        .actions-row { margin-top:50px; text-align:center; }
+        .secondary-btn { margin-left:15px; cursor:pointer; background:none; border:1px solid #ccc; padding:10px; border-radius:12px; }
+
+        #invoice-output {
+            display: none;
+            background: white;
+            width: 210mm;
+            min-height: 297mm;
+            margin: 20px auto;
+            padding: 20mm;
+            box-sizing: border-box;
+            position: relative;
+            color: #000;
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(49, 32, 20, 0.12);
+        }
+
+        .tpl-classic .inv-table { width: 100%; border-collapse: collapse; border: 2px solid #000; margin-top: 20px; }
         .tpl-classic .inv-table th { border: 2px solid #000; background-color: #f2f2f2; padding: 10px; text-transform: uppercase; }
         .tpl-classic .inv-table td { border: 2px solid #000; padding: 10px; }
         .tpl-classic .total-container { border: 2px solid #000; border-top: none; display: flex; justify-content: flex-end; }
 
-        /* STYLE 2: MODERN BLUE (CLEAN) */
         .tpl-modern .inv-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         .tpl-modern .inv-table th { background-color: #007bff; color: white; padding: 12px; border: none; }
         .tpl-modern .inv-table td { border-bottom: 1px solid #eee; padding: 12px; }
         .tpl-modern .total-container { background: #f8f9fa; display: flex; justify-content: flex-end; border-radius: 0 0 8px 8px; }
 
-        .inv-header { display: flex; justify-content: space-between; margin-bottom: 40px; }
+        .table-wrap { width: 100%; }
+        .inv-header { display: flex; justify-content: space-between; margin-bottom: 40px; gap: 20px; }
         #out_logo_box img, .sign-box img { max-width: 150px; max-height: 80px; object-fit: contain; display: block; }
+
+        .tpl-classic .inv-table tbody { min-height: 500px; }
+        .tpl-classic .inv-table tr:last-child td { height: 400px; vertical-align: top; }
+        .tpl-modern .inv-table tbody tr:last-child td { height: 400px; vertical-align: top; }
+
+        @media (max-width: 900px) {
+            body { padding: 12px; }
+            .form-container { padding: 24px; border-radius: 22px; }
+            .form-grid { grid-template-columns: 1fr; gap: 0; }
+            .item-row, .inv-header, .invoice-meta { flex-direction: column; }
+            .item-row { gap: 8px; }
+            .item-row button { width: 100%; margin-bottom: 0 !important; }
+            #invoice-output { width: 100%; min-height: auto; padding: 24px; }
+            #out_f_addr { width: 100% !important; }
+            .invoice-brand, .invoice-meta-right { text-align: left; }
+            .actions-row button,
+            .btn-add,
+            .btn-generate { width: 100%; }
+            .secondary-btn { margin-left: 0; margin-top: 12px; }
+            .upload-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .inv-table { min-width: 520px; }
+            .inv-table th,
+            .inv-table td { font-size: 13px; white-space: nowrap; }
+            .inv-table th:first-child,
+            .inv-table td:first-child { white-space: normal; min-width: 220px; }
+        }
+
+        @media (max-width: 560px) {
+            body { padding: 8px; }
+            .form-container { padding: 16px; }
+            h2 { font-size: 22px; }
+            .form-subtitle { font-size: 14px; margin-bottom: 22px; }
+            input, textarea, select { font-size: 16px; }
+            #invoice-output { padding: 16px; border-radius: 18px; }
+            .table-wrap { overflow: visible; }
+            .inv-table, .inv-table thead, .inv-table tbody, .inv-table tr, .inv-table th, .inv-table td {
+                display: block;
+                width: 100%;
+            }
+            .inv-table { min-width: 0; border: none !important; margin-top: 16px; }
+            .inv-table thead { display: none; }
+            .inv-table tbody { display: grid; gap: 12px; }
+            .inv-table tr {
+                background: #fffaf5;
+                border: 1px solid rgba(71, 44, 29, 0.1);
+                border-radius: 16px;
+                padding: 12px 14px;
+                box-shadow: 0 10px 25px rgba(76, 45, 23, 0.08);
+            }
+            .tpl-classic .inv-table tr:last-child td,
+            .tpl-modern .inv-table tbody tr:last-child td { height: auto; }
+            .inv-table td {
+                border: none !important;
+                min-width: 0 !important;
+                white-space: normal !important;
+                padding: 6px 0 !important;
+                text-align: left !important;
+            }
+            .inv-table td::before {
+                content: attr(data-label);
+                display: block;
+                font-size: 11px;
+                font-weight: 700;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: var(--muted);
+                margin-bottom: 4px;
+            }
+            .total-container { margin-top: 16px; border-radius: 18px !important; }
+        }
 
         @media print {
             body { background: none; padding: 0; margin: 0; }
@@ -50,52 +237,46 @@
             #invoice-output { display: block !important; width: 100%; margin: 0; padding: 15mm; box-shadow: none; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
             @page { size: A4; margin: 0; }
         }
-        
-        /* Untuk Template Classic (Kotak Hitam) */
-.tpl-classic .inv-table tbody {
-    /* Kita paksa tinggi badan jadual sekurang-kurangnya 400px atau lebih */
-    min-height: 500px; 
-}
-
-/* Teknik untuk paksa garisan kotak jadual nampak penuh ke bawah */
-.tpl-classic .inv-table tr:last-child td {
-    height: 400px; /* Ini akan 'stretch' baris terakhir supaya penuh ke bawah */
-    vertical-align: top;
-}
-
-/* Untuk Template Modern */
-.tpl-modern .inv-table tbody tr:last-child td {
-    height: 400px;
-    vertical-align: top;
-}
-
     </style>
 </head>
 <body>
 
 <div id="form-section" class="form-container no-print">
     <h2>Invoice Builder</h2>
-    
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+    <p class="form-subtitle">Bina invoice yang nampak kemas, profesional, dan terus sedia untuk dicetak atau dijadikan PDF dari telefon ataupun desktop.</p>
+
+    <div class="form-grid">
         <div><label>Pilih Style Template</label>
             <select id="template_choice">
                 <option value="tpl-classic">Classic Black (Kotak)</option>
                 <option value="tpl-modern">Modern Blue (Clean)</option>
             </select>
         </div>
-        <div><label>Logo Syarikat</label><input type="file" id="logo_input" accept="image/*"></div>
+        <div class="upload-field">
+            <label>Logo Syarikat</label>
+            <div class="upload-row">
+                <input type="file" id="logo_input" accept="image/*">
+                <button type="button" class="clear-upload-btn" onclick="clearImage('logo_input', 'out_logo_box')">Buang</button>
+            </div>
+        </div>
     </div>
 
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+    <div class="form-grid">
         <div><label>Syarikat Anda</label><input type="text" id="f_name" placeholder="Syahmi Repair Services"></div>
         <div><label>No. Invoice</label><input type="number" id="inv_no" value="100"></div>
     </div>
 
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+    <div class="form-grid">
         <div><label>Tarikh Invoice</label><input type="date" id="inv_date"></div>
-        <div><label>Tandatangan (PNG)</label><input type="file" id="sign_input" accept="image/*"></div>
+        <div class="upload-field">
+            <label>Tandatangan (PNG)</label>
+            <div class="upload-row">
+                <input type="file" id="sign_input" accept="image/*">
+                <button type="button" class="clear-upload-btn" onclick="clearImage('sign_input', 'out_sign_box')">Buang</button>
+            </div>
+        </div>
     </div>
-    
+
     <label>Alamat Syarikat</label><textarea id="f_addr" rows="3"></textarea>
     <label>Bill To (Pelanggan)</label><textarea id="billto" rows="3"></textarea>
 
@@ -107,77 +288,106 @@
             <div style="flex:1;"><label>Harga (RM)</label><input type="number" class="price" step="0.01"></div>
         </div>
     </div>
-    
+
     <button type="button" class="btn-add" onclick="addItem()">+ Tambah Baris</button>
     <button type="button" class="btn-generate" onclick="generateInvoice()">HASILKAN INVOICE</button>
 </div>
 
 <div id="invoice-output">
     <div class="inv-header">
-        <div>
-            <div id="out_f_name" style="font-size:22px; font-weight:700; color: #000; text-transform: uppercase;"></div>
-            <p id="out_f_addr" style="font-size:14px; width:350px; margin-top:5px; white-space: pre-line; font-weight: 400; line-height: 1.5; color: #333;"></p>
+        <div class="invoice-company">
+            <div id="out_f_name" style="font-size:22px; font-weight:700; color:#000; text-transform:uppercase;"></div>
+            <p id="out_f_addr" style="font-size:14px; width:350px; margin-top:5px; white-space:pre-line; font-weight:400; line-height:1.5; color:#333;"></p>
         </div>
-        <div style="text-align: right;">
-            <div style="font-size:22px; font-weight:700; margin-bottom:10px; color: #000;">INVOICE</div>
+        <div class="invoice-brand">
+            <div style="font-size:22px; font-weight:700; margin-bottom:10px; color:#000;">INVOICE</div>
             <div id="out_logo_box"></div>
         </div>
     </div>
-    
-    <div style="display:flex; justify-content:space-between; margin-bottom:40px; font-size:14px;">
-        <div>
-            <label style="color: #000; font-weight: 700; margin-bottom: 5px; display: block; font-size: 12px;">BILL TO</label>
-            <div id="out_billto" style="white-space: pre-line; font-weight: 400; line-height: 1.5; color: #333;"></div>
+
+    <div class="invoice-meta">
+        <div class="invoice-billto">
+            <label style="color:#000; font-weight:700; margin-bottom:5px; display:block; font-size:12px;">BILL TO</label>
+            <div id="out_billto" style="white-space:pre-line; font-weight:400; line-height:1.5; color:#333;"></div>
         </div>
-        <div style="text-align:right;">
-            <p style="margin: 0 0 5px 0;"><b>Invoice #</b> <span id="out_inv_no"></span></p>
-            <p style="margin: 0;"><b>Date:</b> <span id="out_inv_date"></span></p>
+        <div class="invoice-meta-right">
+            <p style="margin:0 0 5px 0;"><b>Invoice #</b> <span id="out_inv_no"></span></p>
+            <p style="margin:0;"><b>Date:</b> <span id="out_inv_date"></span></p>
         </div>
     </div>
 
-    <table class="inv-table" id="out_table">
-        <thead>
-            <tr>
-                <th style="text-align:left;">Description</th>
-                <th style="text-align:center; width:60px;">Qty</th>
-                <th style="text-align:right; width:120px;">Amount (RM)</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
+    <div class="table-wrap">
+        <table class="inv-table" id="out_table">
+            <thead>
+                <tr>
+                    <th style="text-align:left;">Description</th>
+                    <th style="text-align:center; width:60px;">Qty</th>
+                    <th style="text-align:right; width:120px;">Amount (RM)</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
 
     <div class="total-container">
-        <div style="padding: 15px; text-align: right;">
-            <span style="font-weight: 600; font-size: 13px; color: #444;">TOTAL AMOUNT</span>
-            <div id="out_total" style="font-size: 20px; font-weight: 700; margin-top: 2px;">RM 0.00</div>
+        <div style="padding:15px; text-align:right;">
+            <span style="font-weight:600; font-size:13px; color:#444;">TOTAL AMOUNT</span>
+            <div id="out_total" style="font-size:20px; font-weight:700; margin-top:2px;">RM 0.00</div>
         </div>
     </div>
-    
-    <div style="margin-top: 80px; text-align: right;">
-        <p style="font-size:12px; margin-bottom:10px; font-weight: bold; color: #444;">Tandatangan Pengesahan:</p>
-        <div class="sign-box" id="out_sign_box" style="display: flex; justify-content: flex-end;"></div>
+
+    <div style="margin-top:80px; text-align:right;">
+        <p style="font-size:12px; margin-bottom:10px; font-weight:bold; color:#444;">Tandatangan Pengesahan:</p>
+        <div class="sign-box" id="out_sign_box" style="display:flex; justify-content:flex-end;"></div>
     </div>
 
-    <div class="no-print" style="margin-top:50px; text-align:center;">
+    <div class="no-print actions-row">
         <button onclick="window.print()" style="padding:15px 30px; background:#007bff; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">DOWNLOAD PDF</button>
-        <button onclick="goBack()" style="margin-left:15px; cursor:pointer; background:none; border: 1px solid #ccc; padding: 10px; border-radius: 8px;">Edit Semula</button>
+        <button onclick="goBack()" class="secondary-btn">Edit Semula</button>
     </div>
 </div>
 
 <script>
     document.getElementById('inv_date').valueAsDate = new Date();
 
+    function cleanText(value) {
+        return String(value ?? '').trim();
+    }
+
+    function formatInvoiceDate(value) {
+        if (!value) return '';
+
+        const date = new Date(`${value}T00:00:00`);
+        if (Number.isNaN(date.getTime())) return value;
+
+        return date.toLocaleDateString('en-MY', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+    }
+
+    function clearImage(inputId, outId) {
+        const input = document.getElementById(inputId);
+        const output = document.getElementById(outId);
+
+        input.value = '';
+        output.innerHTML = '';
+    }
+
     function addItem() {
         const html = `<div class="item-row">
             <div style="flex:3;"><label class="no-print">Description</label><input type="text" class="desc" placeholder="Service fee"></div>
             <div style="flex:1;"><label class="no-print">Qty</label><input type="number" class="qty" value="1"></div>
             <div style="flex:1;"><label class="no-print">Harga</label><input type="number" class="price" step="0.01"></div>
-            <button type="button" onclick="removeItem(this)" style="background:#ff4d4d; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer; margin-bottom:20px;">✕</button>
+            <button type="button" onclick="removeItem(this)" aria-label="Buang baris" style="background:#ff4d4d; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer; margin-bottom:20px;">&times;</button>
         </div>`;
         document.getElementById('items-list').insertAdjacentHTML('beforeend', html);
     }
 
-    function removeItem(btn) { btn.parentElement.remove(); }
+    function removeItem(btn) {
+        btn.parentElement.remove();
+    }
 
     function goBack() {
         document.getElementById('invoice-output').style.display = 'none';
@@ -187,45 +397,69 @@
     function generateInvoice() {
         const choice = document.getElementById('template_choice').value;
         const out = document.getElementById('invoice-output');
-        
-        // Reset template class & apply choice
-        out.className = ''; 
-        out.classList.add(choice);
-
-        document.getElementById('out_f_name').innerText = document.getElementById('f_name').value;
-        document.getElementById('out_f_addr').innerText = document.getElementById('f_addr').value;
-        document.getElementById('out_billto').innerText = document.getElementById('billto').value;
-        document.getElementById('out_inv_no').innerText = document.getElementById('inv_no').value;
-        document.getElementById('out_inv_date').innerText = document.getElementById('inv_date').value;
-
+        const tableBody = document.querySelector('#out_table tbody');
         const descs = document.getElementsByClassName('desc');
         const qtys = document.getElementsByClassName('qty');
         const prices = document.getElementsByClassName('price');
         let grandTotal = 0;
-        let tableBody = "";
 
-        for(let i=0; i<descs.length; i++) {
-            let q = (qtys[i].value || 0);
-            let p = (prices[i].value || 0);
-            let sub = q * p;
+        out.className = '';
+        out.classList.add(choice);
+
+        document.getElementById('out_f_name').innerText = cleanText(document.getElementById('f_name').value);
+        document.getElementById('out_f_addr').innerText = cleanText(document.getElementById('f_addr').value);
+        document.getElementById('out_billto').innerText = cleanText(document.getElementById('billto').value);
+        document.getElementById('out_inv_no').innerText = cleanText(document.getElementById('inv_no').value);
+        document.getElementById('out_inv_date').innerText = formatInvoiceDate(document.getElementById('inv_date').value);
+
+        tableBody.innerHTML = '';
+
+        for (let i = 0; i < descs.length; i++) {
+            const q = Number(qtys[i].value) || 0;
+            const p = Number(prices[i].value) || 0;
+            const sub = q * p;
+            const row = document.createElement('tr');
+            const descCell = document.createElement('td');
+            const qtyCell = document.createElement('td');
+            const amountCell = document.createElement('td');
+
             grandTotal += sub;
-            tableBody += `<tr>
-                <td style="font-weight:500;">${descs[i].value}</td>
-                <td style="text-align:center;">${q}</td>
-                <td style="text-align:right; font-weight:600;">${sub.toFixed(2)}</td>
-            </tr>`;
+
+            descCell.style.fontWeight = '500';
+            qtyCell.style.textAlign = 'center';
+            amountCell.style.textAlign = 'right';
+            amountCell.style.fontWeight = '600';
+
+            descCell.textContent = cleanText(descs[i].value);
+            qtyCell.textContent = String(q);
+            amountCell.textContent = sub.toFixed(2);
+            descCell.setAttribute('data-label', 'Description');
+            qtyCell.setAttribute('data-label', 'Qty');
+            amountCell.setAttribute('data-label', 'Amount (RM)');
+
+            row.append(descCell, qtyCell, amountCell);
+            tableBody.appendChild(row);
         }
-        document.querySelector("#out_table tbody").innerHTML = tableBody;
-        document.getElementById('out_total').innerText = "RM " + grandTotal.toFixed(2);
+
+        document.getElementById('out_total').innerText = 'RM ' + grandTotal.toFixed(2);
 
         const handleImg = (id, outId) => {
             const file = document.getElementById(id).files[0];
-            if(file) {
+            const output = document.getElementById(outId);
+
+            output.innerHTML = '';
+
+            if (file) {
                 const reader = new FileReader();
-                reader.onload = (e) => { document.getElementById(outId).innerHTML = `<img src="${e.target.result}">`; };
+                reader.onload = (e) => {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    output.appendChild(img);
+                };
                 reader.readAsDataURL(file);
             }
         };
+
         handleImg('logo_input', 'out_logo_box');
         handleImg('sign_input', 'out_sign_box');
 
