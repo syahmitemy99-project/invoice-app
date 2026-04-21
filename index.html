@@ -906,7 +906,7 @@
 </head>
 <body>
 
-<div id="form-section" class="form-container no-print">
+<form id="form-section" class="form-container no-print" autocomplete="on" onsubmit="event.preventDefault(); generateInvoice();">
     <h2>Invoice Builder</h2>
     <p class="form-subtitle">Bina invoice yang nampak kemas, profesional, dan terus sedia untuk dicetak atau dijadikan PDF dari telefon ataupun desktop.</p>
 
@@ -928,7 +928,13 @@
     </div>
 
     <div class="form-grid">
-        <div><label>Syarikat Anda</label><input type="text" id="f_name" placeholder="Syahmi Repair Services"></div>
+        <div>
+            <label>Syarikat Anda</label>
+            <input type="text" id="f_name" name="syahmi_company_name" list="company_name_suggestions" autocomplete="organization" placeholder="Syahmi Repair Services">
+            <datalist id="company_name_suggestions">
+                <option value="Syahmi Repair Services"></option>
+            </datalist>
+        </div>
         <div><label>No. Invoice</label><input type="number" id="inv_no" value="100"></div>
     </div>
 
@@ -943,21 +949,51 @@
         </div>
     </div>
 
-    <label>Alamat Syarikat</label><textarea id="f_addr" rows="3"></textarea>
+    <label>Alamat Syarikat</label><textarea id="f_addr" name="company_address" autocomplete="street-address" rows="3"></textarea>
     <div class="form-grid">
-        <div><label>No. Phone</label><input type="text" id="f_phone" placeholder="+60 12-345 6789"></div>
-        <div><label>Email</label><input type="email" id="f_email" placeholder="hello@syarikat.com"></div>
+        <div>
+            <label>No. Phone</label>
+            <input type="text" id="f_phone" name="company_phone" list="company_phone_suggestions" autocomplete="tel" placeholder="+60 18957 9176">
+            <datalist id="company_phone_suggestions">
+                <option value="+60 18957 9176"></option>
+            </datalist>
+        </div>
+        <div>
+            <label>Email</label>
+            <input type="email" id="f_email" name="company_email" list="company_email_suggestions" autocomplete="email" placeholder="syahmitemy@gmail.com">
+            <datalist id="company_email_suggestions">
+                <option value="syahmitemy@gmail.com"></option>
+            </datalist>
+        </div>
     </div>
     <label>Bill To (Pelanggan)</label><textarea id="billto" rows="3"></textarea>
 
     <h3>Payment Information</h3>
     <div class="form-grid">
-        <div><label>Nama Bank</label><input type="text" id="payment_bank_name" placeholder="Maybank"></div>
-        <div><label>Penama Bank</label><input type="text" id="payment_bank_holder" placeholder="Syahmi Repair Services"></div>
+        <div>
+            <label>Nama Bank</label>
+            <input type="text" id="payment_bank_name" name="payment_bank_name" list="payment_bank_name_suggestions" autocomplete="on" placeholder="BANK ISLAM">
+            <datalist id="payment_bank_name_suggestions">
+                <option value="BANK ISLAM"></option>
+            </datalist>
+        </div>
+        <div>
+            <label>Penama Bank</label>
+            <input type="text" id="payment_bank_holder" name="payment_bank_holder" list="payment_bank_holder_suggestions" autocomplete="on" placeholder="SYAHMI AIMAN">
+            <datalist id="payment_bank_holder_suggestions">
+                <option value="SYAHMI AIMAN"></option>
+            </datalist>
+        </div>
     </div>
     <div class="form-grid">
-        <div><label>No. Akaun</label><input type="text" id="payment_account_no" placeholder="1234567890"></div>
-        <div><label>Rujukan / Notes</label><input type="text" id="payment_reference" placeholder="Guna nombor invoice sebagai rujukan"></div>
+        <div>
+            <label>No. Akaun</label>
+            <input type="text" id="payment_account_no" name="payment_account_no" list="payment_account_no_suggestions" autocomplete="on" placeholder="08031026733985">
+            <datalist id="payment_account_no_suggestions">
+                <option value="08031026733985"></option>
+            </datalist>
+        </div>
+        <div><label>Rujukan / Notes</label><input type="text" id="payment_reference" name="payment_reference" autocomplete="on" placeholder="Guna nombor invoice sebagai rujukan"></div>
     </div>
     <label>Terms and Conditions (Optional)</label><textarea id="terms_conditions" rows="4" placeholder="Contoh: Bayaran perlu dijelaskan dalam masa 7 hari. Barang yang sudah dihantar tidak boleh dipulangkan."></textarea>
 
@@ -972,7 +1008,7 @@
 
     <button type="button" class="btn-add" onclick="addItem()">+ Tambah Baris</button>
     <button type="button" class="btn-generate" onclick="generateInvoice()">HASILKAN INVOICE</button>
-</div>
+</form>
 
 <div id="invoice-output">
     <div class="inv-header">
